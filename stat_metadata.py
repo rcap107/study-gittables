@@ -1,54 +1,29 @@
 import os
 import os.path as osp
 import pandas as pd
-import numpy as np
+from pyarrow import parquet as pq
 from tqdm import tqdm
+import numpy as np
+import json
 from joblib import Parallel, delayed
 from datetime import datetime as dt
 
 
-def study_one_dataset(
-    idx: int, df_path: str, df_name: str, group_name: str, info_folder: str
-):
-    info_dict = {
-        "group_name": group_name,
-        "name": df_name,
-        "tot_rows": 0,
-        "tot_columns": 0,
-        "tot_values": 0,
-        "num_columns": 0,
-        "cat_columns": 0,
-        "uniq_cat_values": 0,
-        "avg_red_cat_values": 0,
-    }
-
-    # if osp.exists(osp.join(info_folder, group_name) + ".csv"):
-    #     return (idx, None)
-
+def study_one_dataset(idx: int, tgt_folder: str, df_name: str, group_name: str):
+    info_dict = {"group_name": group_name, "name": df_name}
     try:
-        df = pd.read_parquet(df_path)
+        file_path = osp.join(tgt_folder, df_name)
+        table = pq.read_table(file_path)
+        md = table.schema.metadata[b"gittables"]
+        js = json.loads(md.decode("utf-8", errors="strict"))
 
-        info_dict["tot_rows"], info_dict["tot_columns"] = df.shape
-        info_dict["tot_values"] = df.shape[0] * df.shape[1]
-        num_attr = df.select_dtypes(include="number").columns
-        cat_attr = [_ for _ in df.columns if _ not in num_attr]
-        info_dict["num_columns"] = len(num_attr)
-        info_dict["cat_columns"] = len(cat_attr)
-
-        val_str = df[cat_attr].values.astype(str).ravel()
-
-        uniq_values, count_uniq = np.unique(val_str, return_counts=True)
-        info_dict["uniq_cat_values"] = len(uniq_values)
-        if len(uniq_values) > 0:
-            info_dict["avg_red_cat_values"] = np.mean(count_uniq)
-
+        info_dict.update(js["table_domain"])
         return (idx, info_dict)
-    except Exception:
+    except Exception as e:
         return (idx, None)
 
 
 if __name__ == "__main__":
-
     root_dir = osp.realpath("data/zenodo/")
 
     tables_dir = osp.join(root_dir, "tables")
@@ -74,19 +49,14 @@ if __name__ == "__main__":
         columns = [
             "group_name",
             "name",
-            "tot_rows",
-            "tot_columns",
-            "tot_values",
-            "num_columns",
-            "cat_columns",
-            "uniq_cat_values",
-            "avg_red_cat_values",
+            "schema_syntactic",
+            "schema_semantic",
+            "dbpedia_syntactic",
+            "dbpedia_semantic",
         ]
 
         r = Parallel(n_jobs=8, verbose=0)(
-            delayed(study_one_dataset)(
-                idx, osp.join(tgt_folder, fname), fname, folder_name, info_folder
-            )
+            delayed(study_one_dataset)(idx, tgt_folder, fname, folder_name)
             for idx, fname in tqdm(
                 enumerate(os.listdir(tgt_folder)),
                 position=0,

@@ -68,8 +68,11 @@ All stat datasets are saved in different files (one per `tables/` folder).
 
 To combine the stat datasets in a single file, I just used the shell. 
 ```sh
-tail -n +1 -q *.csv > info_compiled.csv
+tail -n +2 -q *.csv > info_compiled.csv
+# tail -n +2 selects all the lines starting from the second (i.e. ignores the header)
+# -q suppresses the file name
 ```
+
 
 The actual study of the compiled information file is `notebooks/aggregate-study.ipynb`. 
 
@@ -85,4 +88,4 @@ The study of the metadata is in `notebooks/metadata-study.ipynb`.
     - Headers are not always present, table names are not representative of the content
     - Metadata is hard to unpack in its current format
 - Encoding of the tables
-    - Dones on value level
+    - Fasttext? 

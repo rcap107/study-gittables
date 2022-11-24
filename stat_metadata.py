@@ -67,7 +67,7 @@ if __name__ == "__main__":
         data_dict = {k: v for (k, v) in r if v is not None}
 
         info_df = pd.DataFrame.from_dict(data_dict, orient="index", columns=columns)
-        info_df.to_csv(osp.join(info_folder, folder_name) + ".csv")
+        info_df.to_csv(osp.join(info_folder, folder_name) + "_md.csv")
 
     end_time = dt.now()
     print(f"End time: {end_time}")

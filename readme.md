@@ -77,15 +77,46 @@ tail -n +2 -q *.csv > info_compiled.csv
 The actual study of the compiled information file is `notebooks/aggregate-study.ipynb`. 
 
 ## Studying the metadata
-The study of the metadata is in `notebooks/metadata-study.ipynb`. 
+The study of the metadata is in `notebooks/metadata-study.ipynb`. Overall, the metadata contained by the parquet files is 
+not particularly useful. The original url of the file is not reliable as a lot of the files are missing. In theory, the 
+metadata should include the schema.org and dbpedia tags for the tables, however these tags often disagree, are not 
+consistent or are just missing. 
+
+Another issue that came up earlier, and that won't be solved by this step is how most tables lack an actual header, with
+the first row being treated as header even though it normally is general data. This is particularly problematic because
+the result is that the type tagging operation is executed on less-than-useful data, which explains the remarkably poor 
+accuracy of the tags. 
+
+The aggregate information is reported in the notebook. Given the less-than-optimistic outlook, I stopped working on that 
+and moved on to the next steps. 
+
+## Tokenizing the data
+The objective of this step was tokenizing the content of the tables, then looking for the tokens that appear more 
+frequently. The exploratory study is done in `tokenize-study.ipynb`, while the actual tokenization operations are done in 
+`convert_tables_to_text.py`, `encode_with_lib.py` and `tokenize_with_lib.py`. 
+
+For this, I first ran a pre-processing step (`convert_tables_to_text.py`) in which I simplified all the `csv` files in the repository by 
+replacing all `,` with ` ` (commas with whitespaces), so that the field delimiters would not be considered as tokens by
+the tokenizer. 
+Something to note is that **many tables share the same name**, but are contained by different tables. For this reason, I 
+could not "dump" everything in a single folder, because in that way about half of the tables are actually lost. 
+Therefore, to avoid issues, the complete dir tree is used in all directories. 
 
 
-## Next steps
+While I have tried with the `CountVectorizer` function provided by `scikit-learn`, I was not able to obtain
+good results. 
 
-- Cleanup
-    - Some cleanup is mandatory. There is just too much stuff to use.
-    - Cleanup should probably be both at the table level (some tables are not useful), and at the column/value level (some columns are a mess to use, e.g. very long textual cells, lists of values)
-    - Headers are not always present, table names are not representative of the content
-    - Metadata is hard to unpack in its current format
-- Encoding of the tables
-    - Fasttext? 
+I then tried to use the Huggingface `tokenizers` library to implement a slightly customized BPE tokenizer. The creation 
+and training of the tokenizer is done in `tokenize_with_lib.py`. The resulting tokenizer is saved in `data/tokenizer.json`. 
+
+This is done in `encode_with_lib.py`, which is a script that reads once again all the tables in the repository, encodes 
+them using the tokenizer saved in the previous step, then uses a `Counter` object to count the number of occurrences of
+each token in all datasets. In the end, the counter is saved as json in `global_counter.json`. 
+
+## Embeddings with fasttext? 
+The potential final step is generating fasttext embeddings on the tables. How this will be done, remains to be seen.
+However, the fact that the tables are now available in "textual form", and that it is also possible to encode them using 
+a tokenizer opens some possibilities.
+
+There also remains the issue of deciding the granularity of the embeddings: will it be at the level of a table value, 
+table row, table column, table? This is something that remains to be seen. 

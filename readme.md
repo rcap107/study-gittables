@@ -18,10 +18,21 @@ Repository:
 This is a repository that contains a number of (partially labeled) tables from a number of different domains. 
 
 ## Downloading the repository
-The dataset was downloaded using https://github.com/rcap107/zenodo-download, while the actual study and preparation of the full dataset is done using https://github.com/rcap107/study-gittables.
+The dataset was downloaded using https://github.com/rcap107/zenodo-download, while the actual study and preparation of 
+the full dataset is done using a variety of scripts in https://github.com/rcap107/study-gittables. This readme is assuming
+that all archives have already been downloaded in `data/zenodo/archives/`. 
 
-## Extracting the tables
-All archives saved in `data/zenodo/archives` were extracted in `data/zenodo/tables` using `extracting_tables.py`. Each archive is extracted in its own subfolder. 
+## Preparing the tables for later use
+The `main_preparation.py` script contains functions for extracting all tables in 
+their respective folders, as well as converting them to a "pseudo-textual" form. 
+
+This file is just a wrapper for the scripts `scripts/extracting_tables.py` and `scripts/convert_tables_to_text.py` 
+
+The `extract` argument to `main_preparation.py` will extract all archives found in the root to the given folder. 
+
+The `convert` argunebt to `main_preparation.py` will instead convert all the (already extracted) tables to a textual format.
+More detail on this is reported in the section [Tokenizing the data](#tokenizing-the-data).
+
 
 ## Preliminary study
 Each table is stored in a Parquet file which can be processed by different data processing libraries like Pandas, Spark, and Pyarrow. 

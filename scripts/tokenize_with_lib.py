@@ -8,13 +8,8 @@ import glob
 
 corpus_files = glob.glob("data/zenodo/txt_tables/*/*.txt")
 
-
 normalizer = normalizers.Sequence([NFD(), Lowercase(), StripAccents()])
-# Testing normalizer
-normalizer.normalize_str("Héllò hôw are ü?")
 pre_tokenizer = pre_tokenizers.Sequence([Whitespace(), Digits()])
-# Testing pre-tokenizer
-pre_tokenizer.pre_tokenize_str("Call 911!")
 # Creating the tokenizer with the assigned normalizer and pre-tokenizer
 tokenizer = Tokenizer(BPE())
 tokenizer.normalizer = normalizer
